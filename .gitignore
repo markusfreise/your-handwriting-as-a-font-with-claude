@@ -1,0 +1,6 @@
+out/
+scans/
+test_scans/
+__pycache__/
+*.png
+!examples/*.png

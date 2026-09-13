@@ -1,0 +1,7 @@
+numpy
+opencv-python-headless
+scipy
+scikit-image
+fonttools
+Pillow
+reportlab
