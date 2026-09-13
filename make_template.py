@@ -84,7 +84,7 @@ def fiducial(x, y):
 
 def page_frame(title, page, npages):
     c.setFont("DVB", 11)
-    c.drawString(M, H - M - 3 * mm, f"Handschrift-Vorlage (Fluss)  ·  {title}  ·  Blatt {page}/{npages}")
+    c.drawString(M, H - M - 3 * mm, f"Handwriting template / Handschrift-Vorlage  ·  {title}  ·  Sheet / Blatt {page}/{npages}")
     fiducial(M - F - 2 * mm, H - M - F); fiducial(W - M + 2 * mm, H - M - F)
     fiducial(M - F - 2 * mm, M); fiducial(W - M + 2 * mm, M)
     c.setFont("DV", 6); c.drawRightString(W - M, M - 3 * mm, f"P{page}")
@@ -114,18 +114,21 @@ for i, text in enumerate(KERNING):
 npages = -(-len(items) // per_page)
 for p in range(npages):
     chunk = items[p * per_page:(p + 1) * per_page]
-    title = {"glyphs": "Zeichen", "sentence": "Sätze", "kerning": "Paare"}[chunk[0][2]]
+    title = {"glyphs": "Characters / Zeichen", "sentence": "Sentences / Sätze", "kerning": "Pairs / Paare"}[chunk[0][2]]
     page_frame(title, p + 1, npages)
     y = H - M - 8 * mm
     for tag, text, kind in chunk:
         y -= LINE_H
         line(y, text, tag, p + 1, kind)
-    if p == 0:
-        c.setFillGray(0.3); c.setFont("DV", 7)
-        c.drawString(M, M + 1 * mm,
-                     "In einem Zug schreiben wie beim Alphabet aufsagen · Buchstaben nicht verbinden · Grundlinie dick, "
-                     "Kleinbuchstaben bis zur x-Linie, Große und Ziffern bis zur oberen Linie · Fehler durchstreichen und "
-                     "einfach weiterschreiben")
+    c.setFillGray(0.3); c.setFont("DV", 6.5)
+    foot = [
+        "EN  Write each line in one flow, like reciting the alphabet · don't connect letters · thick line = baseline, lowercase to the x-line, capitals and digits to the top line",
+        "      mistakes: strike through and carry on · black fineliner 0.7–1.0 mm · scan at 300 dpi with all four corner squares in the picture",
+        "DE  Jede Zeile in einem Zug wie beim Alphabet aufsagen · Buchstaben nicht verbinden · dicke Linie = Grundlinie, Kleinbuchstaben bis zur x-Linie, Große und Ziffern bis zur oberen Linie",
+        "      Fehler durchstreichen und weiterschreiben · schwarzer Fineliner 0,7–1,0 mm · mit 300 dpi scannen, alle vier Eckquadrate mit im Bild",
+    ]
+    for i, t in enumerate(foot):
+        c.drawString(M, M + 7 * mm - i * 2.5 * mm, t)
     c.showPage()
 
 c.save()
