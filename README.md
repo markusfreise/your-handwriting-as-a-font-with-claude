@@ -1,180 +1,290 @@
 # Your handwriting as a font — with Claude
 
-Turn a few sheets of your own handwriting into an installable font (TTF/OTF) with
-2–3 alternates per letter, automatic spacing and kerning measured from your own
-writing. German, Swedish, French and Spanish characters included.
+**[→ Anleitung in deutscher Sprache](#deine-handschrift-als-font--mit-claude)**
 
-Everything here was built in a conversation with Claude. You can either run the
-scripts yourself or hand the whole folder to Claude and use the prompt in
-[`PROMPT.md`](PROMPT.md).
+Print a template. Write on it. Scan it. Give the scans and one prompt to Claude.
+Get back a font of your own handwriting (TTF/OTF) with 2–3 alternates per letter,
+spacing measured from the way you actually write. German, Swedish, French and
+Spanish characters included.
 
-*Deutsche Fassung weiter unten.*
+You never touch any code. The only things you give Claude are your scans and the
+prompt. Everything else happens inside Claude. (There *is* a script in this repo —
+Claude fetches and runs it, so every font is built the same way. You don't need to
+look at it; see *For experts* at the bottom if you want to.)
 
 ---
 
-## How it works
+## 1. Print
 
-1. **Print** `handwriting_template_flow.pdf` at 100 % (no "fit to page"). Five
-   landscape A4 pages: alphabet lines (3× upper, 3× lower, 3× digits, 2× punctuation,
-   2× accented characters), nine sample sentences (EN/DE/SV/FR/ES), eight lines of
-   kerning pairs.
-2. **Write** each line in one flow, the way you'd write the alphabet from memory.
-   Black fineliner, 0.7–1.0 mm. Baseline is the thick line; lowercase up to the
-   x-line, capitals and digits up to the upper line. Don't connect letters. If you
-   make a mistake, strike it through and carry on.
-3. **Scan** at 300 dpi, greyscale, one image per page. The four black squares in the
-   corners must be in the scan — they are used to register the page.
-4. **Build:**
+Download [`handwriting_template_flow.pdf`](handwriting_template_flow.pdf) and print
+it at **100 %** — no "fit to page", no scaling. Five pages, A4 landscape, on plain
+white paper (100–120 g is nicer than standard copy paper because the pen bleeds less).
 
-   ```bash
-   pip install -r requirements.txt
-   python3 build_font.py --scans scans/*.png --family "My Hand" --out out/
-   ```
+## 2. Write
 
-   You get `out/MyHand-Regular.ttf`, `.otf`, a specimen image and
-   `glyphs-check.png` showing every extracted glyph with its assigned character.
-   **Look at that sheet.** Flow writing means the script has to work out which
-   strokes belong to which letter; it prints how many characters it aligned per
-   line, and the check sheet shows where it guessed wrong.
+Use a **black fineliner, 0.7–1.0 mm**. Each line shows in grey what to write.
+Write it in one flow, the way you'd recite the alphabet — don't think about the
+letters one by one, that's exactly what makes fonts look stiff.
 
-5. **Fix** misassigned letters by writing them again on `handwriting_template_cells.pdf`
-   (one character per cell — unambiguous, but you will write slightly differently)
-   or simply by rewriting that line of the flow template.
+- The thick line is the baseline. Lowercase up to the x-line, capitals and digits
+  up to the top line.
+- Don't connect letters.
+- The alphabet lines repeat three times. Write them a little differently each time,
+  naturally — those become the alternates.
+- Mistakes: strike through and carry on. Don't squeeze a correction in.
+- Pages 4–5 are sentences and letter pairs. Write them at your normal speed.
 
-### What the script does
+## 3. Scan
 
-- registers each page with the corner fiducials (perspective transform)
-- removes the printed guide lines by stroke thickness (the pen is ~2× thicker than the lines)
-- attaches dots, umlauts, accents and cedillas to their base letter
-- aligns strokes to the expected text per line with dynamic programming using
-  width, height and descender priors — multi-stroke letters (H, K, T, F …) are reassembled
-- normalises heights per class (x-height, ascender, capital, digit) and equalises
-  stroke width afterwards, so letters written slightly larger don't come out thinner
-- traces outlines as smoothed cubic Béziers (quadratic in the TTF)
-- optical sidebearings from ink profiles, class kerning computed from profiles and
-  **overridden by the gaps you actually left** in the sentence and kerning lines
-- alternates cycle automatically (`calt`, 1→2→3)
+**300 dpi, greyscale, one file per page.** A flatbed scanner is ideal. A scanning
+app such as Genius Scan or Adobe Scan works just as well — what matters is that the
+result has strong contrast: black ink, white paper, no grey shadows. If in doubt,
+take the phone outside to photograph; daylight is always good light. During the
+day, obviously. 😉 A plain photo without a scanning app is not enough.
 
-### Options
+The **four black squares in the corners** must be in the scan — they are used to
+align the page. Name the files so they sort in page order (`page-1.png` …).
+
+## 4. Hand it to Claude
+
+Open a new chat at [claude.ai](https://claude.ai), attach your five scans, and
+paste this (also in [`PROMPT.md`](PROMPT.md), with a German version):
 
 ```
---family "Name"      font family name (PostScript name is derived from it)
---style Regular      style name
---weight 1.1         stroke multiplier: 1.1 = 10 % bolder, 0.9 = lighter
---version 1.0
+I'm turning my handwriting into a font. Attached are the 5 scans of a filled-out
+template from https://github.com/markusfreise/your-handwriting-as-a-font-with-claude
+(300 dpi, one image per page, in page order).
+
+Please do this, step by step, in your code sandbox:
+
+1. Download these two files from the repo:
+   https://raw.githubusercontent.com/markusfreise/your-handwriting-as-a-font-with-claude/main/build_font.py
+   https://raw.githubusercontent.com/markusfreise/your-handwriting-as-a-font-with-claude/main/template_flow_layout.json
+   If you cannot fetch them, stop and tell me — I'll attach them. Don't rewrite
+   the script yourself.
+2. Install: numpy opencv-python-headless scipy scikit-image fonttools Pillow
+3. Run:
+   python3 build_font.py --scans <my scans in page order> \
+       --layout template_flow_layout.json --family "<FONT NAME>" --out out/
+4. Before anything else, show me out/glyphs-check.png and the specimen image
+   from out/, and tell me which lines aligned fewer characters than expected.
+5. If a glyph is misassigned, broken, or has a speck of dirt from the scan,
+   name it and ask me whether to drop that variant, copy another variant over
+   it, or have me rewrite the line — never substitute silently.
+6. Then give me the TTF and OTF from out/ to download.
+
+Rules:
+- Font name: "<FONT NAME>". Number test builds ("<FONT NAME> 2", "<FONT NAME> 3");
+  Adobe Express and Canva refuse a second upload with the same font name. Use
+  the clean name only when I say it's final.
+- Adobe Express and Canva ignore kerning tables. Spacing fixes must go into the
+  sidebearings, not into kerning pairs.
+- If I ask for bolder or lighter, rebuild with --weight (1.1 = 10 % bolder).
+- Whenever you change a glyph, change it in BOTH the TTF and the OTF, and
+  check that both have identical metrics afterwards.
 ```
 
-Adobe Express, Canva etc. identify fonts by PostScript name. If you upload a second
-build, change `--family` (e.g. "My Hand 2") or delete the first one there.
+Replace `<FONT NAME>` with what you want the font to be called. Claude shows you a
+check sheet with every extracted letter and a specimen, you tell it what to fix,
+and it gives you the files. Install the TTF on your computer, or upload it to
+Adobe Express, Canva, CapCut and the like.
 
-### Files
+If the chat can't run code: code execution needs to be switched on in Claude's
+settings (it is by default on paid plans).
 
-| file | what |
-|---|---|
-| `handwriting_template_flow.pdf` + `template_flow_layout.json` | the template to print, and its machine-readable layout |
-| `handwriting_template_cells.pdf` + `template_cells_layout.json` | fallback: one character per cell |
-| `make_template.py`, `make_template_cells.py` | regenerate the templates (edit the character sets or sentences there) |
-| `build_font.py` | the whole pipeline, standalone |
-| `PROMPT.md` | prompts (EN/DE) to hand the job to Claude instead of running the script |
+## 5. If something is off
+
+The check sheet (`glyphs-check.png`) shows every glyph with the character Claude
+assigned to it. Flow writing means the script has to work out which strokes belong
+to which letter — multi-stroke capitals (H, K, T, F) are the usual suspects, and
+specks of dirt from the scan sometimes get glued to a letter. Tell Claude what's
+wrong; typical fixes are dropping a bad variant, copying a good one over it, or
+rewriting one line and re-scanning that page. If a letter refuses to come out
+right, write it on [`handwriting_template_cells.pdf`](handwriting_template_cells.pdf)
+(one character per cell — unambiguous, but you'll write a bit differently) and
+attach that page too.
+
+---
+
+## For experts: run it yourself
+
+Everything Claude does is in [`build_font.py`](build_font.py), standalone, no API
+key needed.
+
+```bash
+pip install -r requirements.txt
+python3 build_font.py --scans scans/*.png --layout template_flow_layout.json --family "My Hand" --out out/
+```
+
+Output: `MyHand-Regular.ttf`, `.otf`, `MyHand-Regular-specimen.png`, `glyphs-check.png`.
+Options: `--style`, `--weight 1.1` (stroke multiplier), `--version`.
+
+What the script does, in order: register each page on the corner fiducials
+(perspective transform) · remove the printed guide lines by stroke thickness ·
+attach dots, umlauts, accents, cedillas to their base letter · align strokes to the
+expected text of each line by dynamic programming with width/height/descender
+priors · normalise heights per class (x-height, ascender, capital, digit) and
+equalise stroke width afterwards · trace smoothed cubic Béziers (quadratic in the
+TTF) · optical sidebearings from ink profiles · class kerning from profiles,
+overridden by the gaps measured in the sentence and pair lines · `calt` cycling
+through the alternates · complete `name` table and `fsType 0` so uploaders accept
+the file.
+
+`make_template.py` and `make_template_cells.py` regenerate the templates.
 
 ### Lessons learned along the way
 
-- **Resolution matters.** A phone photo of a page at ~150 dpi gives 40-pixel letters
-  and visible stair-steps in the outlines. 300 dpi scans of properly sized writing are
-  the minimum.
-- **Don't write letters in isolation** if you can avoid it. Cells give clean data
-  but people write differently letter by letter than in flow — sizes drift,
-  baselines float, the result looks stiff.
-- **Never let a glyph poke past its own advance width.** A sidebearing of −155 units
-  on the `e` made everything collide; the minimum is now clamped at 30.
-- **Per-glyph scaling changes stroke weight.** Scaling a small `a` up by 33 % also
-  makes its stroke 33 % thicker. Measure stroke width on the skeleton and correct it.
-- **Handwritten capitals are often barely taller than the x-height.** Lift them
-  (default 1.45× x-height) or a `H` in running text reads as lowercase.
-- Font uploaders reject files with an incomplete `name` table (IDs 3, 4, 16, 17)
-  or `fsType ≠ 0`. Both are set here.
+- **Resolution matters.** A phone photo at ~150 dpi gives 40-pixel letters and
+  visible stair-steps. 300 dpi is the minimum.
+- **Don't write letters in isolation.** Cells give clean data but people write
+  differently letter by letter than in flow — and letters written too wide get
+  clipped at the cell border.
+- **Never let a glyph poke past its own advance width.** One −155 sidebearing on
+  the `e` made everything collide.
+- **Per-glyph scaling changes stroke weight.** Scale a small `a` up by 33 % and its
+  stroke gets 33 % thicker. Measure stroke width on the skeleton and correct it.
+- **Handwritten capitals are often barely taller than the x-height.** Lift them, or
+  an `H` in running text reads as lowercase.
+- **Adobe Express and Canva ignore kerning.** Everything that has to look right
+  there must be right in the sidebearings. Kerning is a bonus for apps that use it.
+- **Keep TTF and OTF metric-identical.** We once lost every left sidebearing in the
+  TTF while the OTF was fine; the symptom was "ui too tight, ju too wide".
+- **Uploaders reject fonts with an incomplete `name` table** (IDs 3, 4, 16, 17) or
+  `fsType ≠ 0`, and they identify fonts by PostScript name, not file name.
 
 Made by Markus Freise with Claude (Anthropic). MIT licence.
 
 ---
+---
 
 # Deine Handschrift als Font — mit Claude
 
-Ein paar Blätter eigene Handschrift werden zu einer installierbaren Schrift
-(TTF/OTF) mit 2–3 Varianten pro Buchstabe, automatischem Spacing und Kerning, das
-aus deinem eigenen Schreibfluss gemessen wird. Deutsche, schwedische, französische
-und spanische Sonderzeichen sind dabei.
+Vorlage drucken. Beschreiben. Scannen. Scans und einen Prompt an Claude geben.
+Zurück kommt eine Schrift aus deiner Handschrift (TTF/OTF) mit 2–3 Varianten pro
+Buchstabe und Abständen so, wie du tatsächlich schreibst. Deutsche, schwedische,
+französische und spanische Sonderzeichen sind dabei.
 
-## So geht's
+Du fasst keinen Code an. Du gibst Claude nur deine Scans und den Prompt, alles
+andere passiert in Claude. (Es gibt ein Skript in diesem Repo — Claude holt und
+startet es selbst, damit jede Schrift auf dieselbe Weise entsteht. Du musst es
+nicht ansehen; wer will, findet es ganz unten unter *Für Experten*.)
 
-1. **Drucken:** `handwriting_template_flow.pdf` bei 100 % (kein „An Seite anpassen").
-   Fünf Seiten A4 quer: Alphabetzeilen (3× groß, 3× klein, 3× Ziffern, 2× Satzzeichen,
-   2× Sonderzeichen), neun Beispielsätze (EN/DE/SV/FR/ES), acht Zeilen Kerning-Paare.
-2. **Schreiben:** jede Zeile in einem Zug, wie beim Alphabet aufsagen. Schwarzer
-   Fineliner 0,7–1,0 mm. Grundlinie ist die dicke Linie, Kleinbuchstaben bis zur
-   x-Linie, Große und Ziffern bis zur oberen Linie. Buchstaben nicht verbinden. Fehler
-   durchstreichen und weiterschreiben.
-3. **Scannen:** 300 dpi, Graustufen, ein Bild pro Seite. Die vier schwarzen Quadrate
-   in den Ecken müssen mit drauf sein — daran wird die Seite ausgerichtet.
-4. **Bauen:**
+## 1. Drucken
 
-   ```bash
-   pip install -r requirements.txt
-   python3 build_font.py --scans scans/*.png --family "Meine Hand" --out out/
-   ```
+[`handwriting_template_flow.pdf`](handwriting_template_flow.pdf) herunterladen und
+bei **100 %** drucken — kein „An Seite anpassen". Fünf Seiten A4 quer, weißes
+Papier (100–120 g ist angenehmer als Kopierpapier, der Stift schlägt weniger durch).
 
-   Ergebnis: `out/MeineHand-Regular.ttf`, `.otf`, ein Schriftmuster und
-   `glyphs-check.png` mit jeder ausgelesenen Glyphe und dem zugeordneten Zeichen.
-   **Dieses Blatt anschauen.** Beim Fließtext muss das Skript raten, welche Striche
-   zu welchem Buchstaben gehören; es meldet pro Zeile, wie viele Zeichen es
-   zuordnen konnte, und das Kontrollblatt zeigt, wo es daneben lag.
+## 2. Schreiben
 
-5. **Nachbessern:** falsch zugeordnete Buchstaben auf `handwriting_template_cells.pdf`
-   nachschreiben (ein Zeichen pro Zelle — eindeutig, aber man schreibt etwas anders)
-   oder einfach die betroffene Zeile der Fluss-Vorlage neu schreiben.
+**Schwarzer Fineliner, 0,7–1,0 mm.** Über jeder Zeile steht in Grau, was
+hineingehört. In einem Zug schreiben, wie beim Alphabet aufsagen — nicht Buchstabe
+für Buchstabe nachdenken, genau das macht Schriften steif.
 
-### Was das Skript macht
+- Die dicke Linie ist die Grundlinie. Kleinbuchstaben bis zur x-Linie, Große und
+  Ziffern bis zur oberen Linie.
+- Buchstaben nicht verbinden.
+- Die Alphabetzeilen kommen dreimal. Jedes Mal ein bisschen anders schreiben, ganz
+  natürlich — daraus werden die Varianten.
+- Fehler: durchstreichen und weiter. Keine Korrektur dazwischenquetschen.
+- Seiten 4–5 sind Sätze und Buchstabenpaare. In normalem Tempo schreiben.
 
-- richtet jede Seite an den Passmarken aus (perspektivische Entzerrung)
-- entfernt die gedruckten Hilfslinien über die Strichstärke (Stift ≈ doppelt so dick)
-- hängt Punkte, Umlaute, Akzente und Cedillen an ihren Grundbuchstaben
-- ordnet Striche per dynamischer Programmierung dem Solltext der Zeile zu, mit
-  Breiten-, Höhen- und Unterlängen-Erwartung — mehrteilige Buchstaben (H, K, T, F …)
-  werden wieder zusammengesetzt
-- normiert Höhen je Klasse (x-Höhe, Oberlänge, Versal, Ziffer) und gleicht danach
-  die Strichstärke an, damit größer geschriebene Buchstaben nicht dünner werden
-- vektorisiert als geglättete kubische Béziers (quadratisch in der TTF)
-- optische Vorbreiten aus Tintenprofilen, Klassen-Kerning berechnet und **durch die
-  Abstände überschrieben, die du in den Satz- und Paarzeilen tatsächlich gelassen hast**
-- Varianten wechseln automatisch (`calt`, 1→2→3)
+## 3. Scannen
 
-### Optionen
+**300 dpi, Graustufen, eine Datei pro Seite.** Ein Flachbettscanner ist ideal.
+Du kannst auch eine Scan-App wie z. B. Genius Scan nutzen. Wichtig ist, dass das
+Ergebnis kontraststark ist: schwarze Tinte, weißes Papier, keine grauen Schatten.
+Im Zweifel beim Fotografieren nach draußen gehen. Dann ist das Licht in jedem Fall
+gut. Natürlich tagsüber. 😉 Ein einfaches Foto ohne Scan-App reicht nicht.
+
+Die **vier schwarzen Quadrate in den Ecken** müssen mit im Bild sein, daran wird
+die Seite ausgerichtet. Dateien so benennen, dass sie in Seitenreihenfolge
+sortieren (`seite-1.png` …).
+
+## 4. An Claude geben
+
+Neuen Chat auf [claude.ai](https://claude.ai) öffnen, die fünf Scans anhängen,
+das hier einfügen (steht auch in [`PROMPT.md`](PROMPT.md)):
 
 ```
---family "Name"      Schriftfamilie (der PostScript-Name wird daraus abgeleitet)
---style Regular      Schnittname
---weight 1.1         Strichfaktor: 1,1 = 10 % fetter, 0,9 = leichter
---version 1.0
+Ich mache aus meiner Handschrift eine Schrift. Angehängt sind die 5 Scans der
+ausgefüllten Vorlage aus https://github.com/markusfreise/your-handwriting-as-a-font-with-claude
+(300 dpi, ein Bild pro Seite, in Seitenreihenfolge).
+
+Bitte mach das Schritt für Schritt in deiner Code-Sandbox:
+
+1. Lade diese zwei Dateien aus dem Repo:
+   https://raw.githubusercontent.com/markusfreise/your-handwriting-as-a-font-with-claude/main/build_font.py
+   https://raw.githubusercontent.com/markusfreise/your-handwriting-as-a-font-with-claude/main/template_flow_layout.json
+   Wenn das nicht geht: Stopp, sag Bescheid, ich hänge sie an. Schreib das
+   Skript nicht selbst neu.
+2. Installiere: numpy opencv-python-headless scipy scikit-image fonttools Pillow
+3. Führe aus:
+   python3 build_font.py --scans <meine Scans in Seitenreihenfolge> \
+       --layout template_flow_layout.json --family "<SCHRIFTNAME>" --out out/
+4. Zeig mir zuallererst out/glyphs-check.png und das Schriftmuster aus out/
+   und sag mir, bei welchen Zeilen weniger Zeichen zugeordnet wurden als
+   erwartet.
+5. Wenn eine Glyphe falsch zugeordnet, kaputt oder mit einem Fussel vom Scan
+   verziert ist: benenne sie und frag, ob ich die Variante streichen, eine
+   andere Variante drüberkopieren oder die Zeile neu schreiben will — nie
+   stillschweigend ersetzen.
+6. Dann gib mir TTF und OTF aus out/ zum Download.
+
+Regeln:
+- Schriftname: „<SCHRIFTNAME>". Testbuilds nummerieren („<SCHRIFTNAME> 2",
+  „<SCHRIFTNAME> 3"); Adobe Express und Canva lehnen einen zweiten Upload mit
+  demselben Namen ab. Den sauberen Namen erst, wenn ich sage, dass es final ist.
+- Adobe Express und Canva ignorieren Kerning-Tabellen. Abstandskorrekturen
+  müssen in die Vorbreiten, nicht in Kerning-Paare.
+- Wenn ich fetter oder leichter will: mit --weight neu bauen (1,1 = 10 % fetter).
+- Wenn du eine Glyphe änderst, ändere sie in TTF UND OTF und prüfe danach, dass
+  beide identische Metriken haben.
 ```
 
-Adobe Express, Canva usw. erkennen Schriften am PostScript-Namen. Für einen zweiten
-Upload `--family` ändern (z. B. „Meine Hand 2") oder die erste dort löschen.
+`<SCHRIFTNAME>` durch den gewünschten Namen ersetzen. Claude zeigt dir ein
+Kontrollblatt mit jedem ausgelesenen Buchstaben und ein Schriftmuster, du sagst,
+was zu korrigieren ist, und bekommst die Dateien. TTF auf dem Rechner installieren
+oder bei Adobe Express, Canva, CapCut und Co. hochladen.
 
-### Was unterwegs gelernt wurde
+Falls der Chat keinen Code ausführen kann: Die Code-Ausführung muss in Claudes
+Einstellungen eingeschaltet sein (in den bezahlten Plänen ist sie das von Haus aus).
 
-- **Auflösung entscheidet.** Ein Handyfoto mit ~150 dpi liefert 40-Pixel-Buchstaben
-  und sichtbare Treppen. 300-dpi-Scans sind das Minimum.
-- **Buchstaben nicht einzeln schreiben,** wenn es sich vermeiden lässt. Zellen liefern
-  saubere Daten, aber man schreibt einzeln anders als im Fluss — Größen driften,
-  Grundlinien schweben, das Ergebnis wirkt steif.
-- **Kein Zeichen darf über seine Laufweite ragen.** Eine Vorbreite von −155 beim `e`
-  ließ alles zusammenstoßen; das Minimum ist jetzt auf 30 begrenzt.
-- **Skalierung pro Glyphe verändert die Strichstärke.** Ein kleines `a` um 33 %
-  vergrößern macht seinen Strich 33 % dicker. Strichstärke am Skelett messen und
-  korrigieren.
-- **Handgeschriebene Versalien sind oft kaum höher als die x-Höhe.** Anheben (Standard
-  1,45× x-Höhe), sonst liest sich ein `H` im Fließtext wie ein Kleinbuchstabe.
-- Font-Uploader lehnen Dateien mit unvollständiger `name`-Tabelle (IDs 3, 4, 16, 17)
-  oder `fsType ≠ 0` ab. Beides ist hier gesetzt.
+## 5. Wenn etwas nicht stimmt
+
+Das Kontrollblatt (`glyphs-check.png`) zeigt jede Glyphe mit dem Zeichen, das
+Claude ihr zugeordnet hat. Beim Fließtext muss das Skript raten, welche Striche
+zu welchem Buchstaben gehören — mehrteilige Versalien (H, K, T, F) sind die
+üblichen Kandidaten, und manchmal klebt ein Fussel vom Scan an einem Buchstaben.
+Sag Claude, was falsch ist; meist reicht es, eine Variante zu streichen, eine gute
+drüberzukopieren oder eine Zeile neu zu schreiben und die Seite neu zu scannen.
+Wenn ein Buchstabe partout nicht will, schreib ihn auf
+[`handwriting_template_cells.pdf`](handwriting_template_cells.pdf) (ein Zeichen pro
+Zelle — eindeutig, aber man schreibt etwas anders) und häng die Seite mit an.
+
+---
+
+## Für Experten: selbst ausführen
+
+Alles, was Claude macht, steckt in [`build_font.py`](build_font.py), eigenständig,
+ohne API-Key.
+
+```bash
+pip install -r requirements.txt
+python3 build_font.py --scans scans/*.png --layout template_flow_layout.json --family "Meine Hand" --out out/
+```
+
+Optionen: `--style`, `--weight 1.1` (Strichfaktor), `--version`.
+
+Ablauf: Seiten an den Passmarken entzerren · gedruckte Hilfslinien über die
+Strichstärke entfernen · Punkte, Umlaute, Akzente, Cedillen an ihre Grundbuchstaben
+hängen · Striche per dynamischer Programmierung dem Solltext der Zeile zuordnen ·
+Höhen je Klasse normieren und danach die Strichstärke angleichen · geglättete
+kubische Béziers · optische Vorbreiten aus Tintenprofilen · Klassen-Kerning,
+überschrieben durch die in Satz- und Paarzeilen gemessenen Abstände ·
+`calt`-Wechsel der Varianten · vollständige `name`-Tabelle und `fsType 0`.
+
+`make_template.py` und `make_template_cells.py` erzeugen die Vorlagen neu.
+Die Lektionen aus der Entwicklung stehen oben im englischen Teil.
 
 Von Markus Freise mit Claude (Anthropic). MIT-Lizenz.
